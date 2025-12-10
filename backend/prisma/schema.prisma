@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int    @id @default(autoincrement())
+  username  String @unique
+  email     String @unique
+  passwort  String
+  role      String
+  verzeichnisbaumLogPfad String
+  tenantId  Int
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  usageLogs UsageLog[]
+}
+
+model Tenant {
+  id           Int     @id @default(autoincrement())
+  slug         String  @unique
+  name         String
+  redirectPath String  @default("/")
+  users        User[]
+  usageLogs    UsageLog[]
+}
+
+model UsageLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tenantId  Int
+  menu      String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([tenantId, createdAt])
+}

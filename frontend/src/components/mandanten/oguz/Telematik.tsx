@@ -1,0 +1,111 @@
+import { useState } from 'react'
+
+function formatDateYMD(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}${m}${day}`
+}
+
+export default function Telematik() {
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [clipboardPreview, setClipboardPreview] = useState<string>('')
+
+  async function onProcess(): Promise<void> {
+    if (!file) {
+      setMessage('Bitte zuerst eine Excel-Datei auswählen (.xlsx).')
+      return
+    }
+    setBusy(true)
+    setMessage(null)
+    try {
+      const form = new FormData()
+      form.append('excel', file)
+      const res = await fetch('/py/telematik/process', {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      })
+      if (res.status === 302 || (res as any).redirected) {
+        // Sollte nicht mehr passieren (Auth entfernt), fallback
+        window.location.href = '/py/login'
+        return
+      }
+      const j = await res.json().catch(() => null)
+      if (!res.ok || !j || j.status !== 'ok') {
+        throw new Error(j?.message || 'Verarbeitung fehlgeschlagen')
+      }
+      // XLSX-Download öffnen
+      const url = `/py${j.download}`
+      window.open(url, '_blank', 'noopener,noreferrer')
+      // Zwischenablagevorschau aus Response setzen
+      setClipboardPreview(j.clipboardPreview || '')
+      setMessage(`Datei verarbeitet und heruntergeladen: ${url.split('/').pop()}`)
+    } catch (err: any) {
+      setMessage(err?.message ?? 'Unbekannter Fehler bei der Verarbeitung')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function onCopyClipboard(): Promise<void> {
+    try {
+      if (!clipboardPreview) {
+        setMessage('Keine passenden Daten zum Kopieren gefunden. Bitte zuerst verarbeiten.')
+        return
+      }
+      await navigator.clipboard.writeText(clipboardPreview)
+      setMessage('Zwischenablage gefüllt (Neukunden).')
+    } catch {
+      setMessage('Konnte nicht in die Zwischenablage schreiben.')
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+        <input
+          type="file"
+          accept=".xlsx"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          aria-label="Excel-Datei auswählen"
+        />
+        <button onClick={onProcess} disabled={busy} style={{ padding: '8px 12px' }}>
+          {busy ? 'Bitte warten…' : 'Verarbeiten & herunterladen'}
+        </button>
+        <button onClick={onCopyClipboard} disabled={busy} style={{ padding: '8px 12px' }}>
+          In Zwischenablage kopieren
+        </button>
+        <div style={{ color: '#64748b' }}>Vorschlag: {formatDateYMD()}.xlsx</div>
+      </div>
+
+      {message && (
+        <div style={{ marginBottom: 12, padding: '8px 10px', background: '#f1f5f9', borderRadius: 8 }}>{message}</div>
+      )}
+
+      <fieldset>
+        <legend>Zwischenablage-Vorschau (A..K, Zeilen mit F=1/2)</legend>
+        <textarea
+          value={clipboardPreview}
+          readOnly
+          style={{
+            width: '100%',
+            minHeight: 200,
+            fontFamily:
+              'Courier New, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace',
+            fontSize: 12,
+            whiteSpace: 'pre',
+            padding: 12,
+            border: '1px solid #e2e8f0',
+            borderRadius: 8,
+          }}
+        />
+      </fieldset>
+    </div>
+  )
+}
+
+

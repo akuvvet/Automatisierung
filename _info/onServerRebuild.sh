@@ -1,0 +1,1 @@
+ssh -t root@87.106.224.198 "export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && cd /var/www/vhosts/zone-edv.de/dev3.zone-edv.de/logistikv2/new/ && yarn && yarn build"
