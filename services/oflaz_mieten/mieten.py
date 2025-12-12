@@ -355,8 +355,8 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
 
             month_idx = None
             override = t.get("__month_override", None)
-            if isinstance(override, str) and override in months_order := list(MONATS_ZUORDNUNG.keys()):
-                month_idx = months_order.index(override) + 0
+            if isinstance(override, str) and override in months_order:
+                month_idx = months_order.index(override)
             if pd.notna(dval):
                 try:
                     month_idx = int(getattr(dval, "month"))
