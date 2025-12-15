@@ -15,11 +15,11 @@ export default defineConfig({
     },
     proxy: {
       '/auth': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3007',
         changeOrigin: true,
       },
       '/logs': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3007',
         changeOrigin: true,
       },
       '/py': {
