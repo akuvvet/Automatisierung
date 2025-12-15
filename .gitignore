@@ -1,4 +1,5 @@
 _info/
 node_modules/
-
+services/klees_xlsx_to_pdf/.venv/
+services/oflaz_mieten/__pycache__/
 

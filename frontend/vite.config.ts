@@ -14,6 +14,14 @@ export default defineConfig({
       port: 5174,
     },
     proxy: {
+      '/auth': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/logs': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/py': {
         target: 'http://localhost:5005',
         changeOrigin: true,
