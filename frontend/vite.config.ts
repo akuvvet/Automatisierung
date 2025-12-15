@@ -15,12 +15,12 @@ export default defineConfig({
     },
     proxy: {
       '/py': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5005',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/py/, ''),
       },
       '/klees': {
-        target: 'http://localhost:5001',
+        target: 'http://localhost:5006',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/klees/, ''),
       },
