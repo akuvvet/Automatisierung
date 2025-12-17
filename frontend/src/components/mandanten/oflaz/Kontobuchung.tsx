@@ -5,6 +5,8 @@ export default function Kontobuchung() {
   const [excelKonto, setExcelKonto] = useState<File | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const mieterId = 'file-mieter'
+  const kontoId = 'file-konto'
 
   async function onRun(): Promise<void> {
     if (!excelMieter || !excelKonto) {
@@ -44,14 +46,34 @@ export default function Kontobuchung() {
 
   return (
     <div>
-      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr', maxWidth: 560 }}>
-        <div>
-          <div style={{ marginBottom: 6, fontWeight: 600 }}>Mieter Excel (.xlsx) auswählen</div>
-          <input type="file" accept=".xlsx" onChange={(e) => setExcelMieter(e.target.files?.[0] ?? null)} />
+      <div className="uploadGrid">
+        <div className="uploadCard mieter">
+          <div className="uploadCardTitle">Mieter Excel (.xlsx) auswählen</div>
+          <div className="fileRow">
+            <input
+              id={mieterId}
+              className="visuallyHidden"
+              type="file"
+              accept=".xlsx"
+              onChange={(e) => setExcelMieter(e.target.files?.[0] ?? null)}
+            />
+            <label className="fileButton" htmlFor={mieterId}>Datei auswählen</label>
+            <span className={`fileName${excelMieter ? ' selected' : ''}`}>{excelMieter ? excelMieter.name : 'Keine Datei ausgewählt'}</span>
+          </div>
         </div>
-        <div>
-          <div style={{ marginBottom: 6, fontWeight: 600 }}>Kontoauszug Excel (.xlsx) auswählen</div>
-          <input type="file" accept=".xlsx" onChange={(e) => setExcelKonto(e.target.files?.[0] ?? null)} />
+        <div className="uploadCard konto">
+          <div className="uploadCardTitle">Kontoauszug Excel (.xlsx) auswählen</div>
+          <div className="fileRow">
+            <input
+              id={kontoId}
+              className="visuallyHidden"
+              type="file"
+              accept=".xlsx"
+              onChange={(e) => setExcelKonto(e.target.files?.[0] ?? null)}
+            />
+            <label className="fileButton" htmlFor={kontoId}>Datei auswählen</label>
+            <span className={`fileName${excelKonto ? ' selected' : ''}`}>{excelKonto ? excelKonto.name : 'Keine Datei ausgewählt'}</span>
+          </div>
         </div>
         <div>
           <button onClick={onRun} disabled={busy || !excelMieter || !excelKonto} style={{ padding: '10px 14px' }}>
