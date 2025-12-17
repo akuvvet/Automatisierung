@@ -254,9 +254,9 @@ def login():
     if session.get("user_email"):
         return redirect(url_for("index"))
     return """<!doctype html><html><body>
-              <form method="post">
-                <label>Email: <input name="email" /></label><br/>
-                <label>Password: <input name="password" type="password"/></label><br/>
+              <form method="post" autocomplete="off">
+                <label>Email: <input name="noemail" autocomplete="off" autocapitalize="none" spellcheck="false" /></label><br/>
+                <label>Password: <input name="nopassword" type="password" autocomplete="new-password"/></label><br/>
                 <button type="submit">Login</button>
               </form>
               </body></html>"""

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 
 export default function Login() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('test@test.de')
-  const [password, setPassword] = useState('test2025')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -38,13 +38,20 @@ export default function Login() {
   return (
     <div style={{ maxWidth: 360, margin: '80px auto', padding: 16 }}>
       <h1>Login</h1>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmit} autoComplete="off">
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: 'block', marginBottom: 4 }}>E-Mail</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            name="no-username"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            inputMode="email"
+            placeholder="E-Mail eingeben"
             style={{ width: '100%', padding: 8 }}
             required
           />
@@ -55,6 +62,9 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            name="no-password"
+            autoComplete="new-password"
+            placeholder="Passwort"
             style={{ width: '100%', padding: 8 }}
             required
           />
