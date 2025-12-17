@@ -187,6 +187,20 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
         return ""
 
     df_konto["__hit"] = df_konto["__text_summe"].apply(finde_suchwort)
+    # Normalisierte Felder für spätere Namenssuche im VWZ (insbesondere bei Jobcenter/Bundesagentur)
+    def _norm_text(val: str) -> str:
+        return re.sub(
+            r"\s+",
+            " ",
+            re.sub(r"[^a-z0-9\s]", " ", str(val).lower())
+            .replace("ä", "ae")
+            .replace("ö", "oe")
+            .replace("ü", "ue")
+            .replace("ß", "ss"),
+        ).strip()
+    df_konto["__norm_vwz"] = df_konto[KONTO_VWZ].astype(str).apply(_norm_text)
+    # Für die spätere Trefferauswahl bei Behördenzahlungen nutzen wir standardmäßig den VWZ
+    df_konto["__norm_hit"] = df_konto["__norm_vwz"]
 
     month_key_map = {k.lower(): v for k, v in MONATS_NAMENS_MAPPING.items()}
     month_pattern = re.compile(r"\b(" + "|".join(re.escape(k) for k in MONATS_NAMENS_MAPPING.keys()) + r")\b", flags=re.IGNORECASE)
@@ -206,7 +220,7 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
     if sheet_such in workbook.sheetnames:
         del workbook[sheet_such]
     ws_such = workbook.create_sheet(sheet_such)
-    ws_such.append(["Datum", "Name", "Suchwort", "Betrag", "Zielmonat"])
+    ws_such.append(["Datum", "Name", "Suchwort", "Betrag", "Zielmonat", "Verwendungszweck"])
 
     relevante_labels = {"Miete", "Nebenkosten", "Nachzahlung", "Rate", "Honorar"}
     df_such = df_konto[(df_konto["__klass"].isin(relevante_labels)) | (df_konto["__month_override"].notna())].copy()
@@ -218,7 +232,7 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
     for _, r in df_such.iterrows():
         hit = r["__hit"] if r["__hit"] else r["__klass"]
         ziel_monat = r.get("__month_override", "")
-        ws_such.append(["", r[KONTO_PAYEE], str(hit), r[KONTO_BETRAG], ziel_monat if ziel_monat else ""])
+        ws_such.append(["", r[KONTO_PAYEE], str(hit), r[KONTO_BETRAG], ziel_monat if ziel_monat else "", r[KONTO_VWZ]])
         row_idx = ws_such.max_row
         date_cell = ws_such.cell(row=row_idx, column=1)
         raw_val = r.get("__raw_date", "")
@@ -325,6 +339,8 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
         return pairs
 
     df_such["__norm_payee"] = df_such[KONTO_PAYEE].astype(str).apply(lambda val: re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", str(val).lower()).replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")).strip())
+    # Erweiterte Erkennung für Behörden-Eigentümer (außerhalb der Schleife definiert)
+    GOV_KEYS = ("jobcenter", "bundesagentur", "agentur", "agentur fuer arbeit", "arbeitsagentur", "stadt wuppertal")
 
     for _, row in df_mieter.iterrows():
         m_name = row[mieter_col_name]
@@ -337,9 +353,10 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
 
         owner_norm = key_norm
         tenant_norm = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", str(row[mieter_b_col_name] if mieter_b_col_name else "").lower()).replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")).strip()
-        GOV_KEYS = ("jobcenter", "agentur", "stadt wuppertal")
+        # Bei Behördenzahlungen: Suche Mieternamen im vollständigen Verwendungszweck
         if any(k in owner_norm for k in GOV_KEYS) and tenant_norm:
-            treffer = df_such[df_such.get("__norm_hit", df_such["__norm_payee"]).str.contains(tenant_norm, na=False)]
+            source_series = df_such.get("__norm_hit", df_such["__norm_payee"])
+            treffer = df_such[source_series.str.contains(tenant_norm, na=False)]
         else:
             treffer = df_such[df_such["__norm_payee"] == owner_norm]
         if treffer.empty:
