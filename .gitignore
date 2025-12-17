@@ -6,3 +6,6 @@ services/oflaz_mieten/__pycache__/
 
 services/*/uploads/
 services/*/results/
+
+services/*/uploads/
+services/*/results/
