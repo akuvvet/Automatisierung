@@ -39,7 +39,11 @@ export default function Telematik() {
         throw new Error(j?.message || 'Verarbeitung fehlgeschlagen')
       }
       // XLSX-Download öffnen
-      const url = `/py${j.download}`
+      if (!j.download || typeof j.download !== 'string') {
+        throw new Error('Server lieferte keinen Download-Pfad.')
+      }
+      const downloadPath: string = j.download.startsWith('/') ? j.download : `/${j.download}`
+      const url = `/py${downloadPath}`
       window.open(url, '_blank', 'noopener,noreferrer')
       // Zwischenablagevorschau aus Response setzen
       setClipboardPreview(j.clipboardPreview || '')
