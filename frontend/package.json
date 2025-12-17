@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n \"VITE,FLASK\" -c \"cyan.bold,magenta.bold\" \"npm:serve\" \"npm:py\"",
-    "serve": "vite",
+    "serve": "vite --port 5175",
     "py:klees": "cd ../services/klees_xlsx_to_pdf && (python3 app.py || python app.py)",
     "py:oflaz": "cd ../services/oflaz_mieten && (python3 app.py || python app.py)",
     "py": "concurrently -k -n \"KLEES,OFLAZ\" -c \"green.bold,yellow.bold\" \"npm:py:klees\" \"npm:py:oflaz\"",
