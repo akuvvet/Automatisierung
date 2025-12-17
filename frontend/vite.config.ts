@@ -8,10 +8,11 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5175,
     strictPort: true,
+    allowedHosts: ['app.klick-und-fertig.de'],
     hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5175,
+      protocol: 'wss',
+      host: 'app.klick-und-fertig.de',
+      clientPort: 443,
     },
     proxy: {
       '/auth': {
