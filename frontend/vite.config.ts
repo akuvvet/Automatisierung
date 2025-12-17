@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(() => {
   const domainHmrHost = process.env.VITE_HMR_HOST
   const domainHmrClientPort = Number(process.env.VITE_HMR_CLIENT_PORT || '443')
+  const disableHmr = process.env.VITE_DISABLE_HMR === '1'
   return {
     plugins: [react()],
     server: {
@@ -12,17 +13,19 @@ export default defineConfig(() => {
       port: 5175,
       strictPort: true,
       allowedHosts: ['app.klick-und-fertig.de', 'localhost'],
-      hmr: domainHmrHost
-        ? {
-            protocol: 'wss',
-            host: domainHmrHost,
-            clientPort: domainHmrClientPort,
-          }
-        : {
-            protocol: 'ws',
-            host: 'localhost',
-            port: 5175,
-          },
+      hmr: disableHmr
+        ? false
+        : domainHmrHost
+          ? {
+              protocol: 'wss',
+              host: domainHmrHost,
+              clientPort: domainHmrClientPort,
+            }
+          : {
+              protocol: 'ws',
+              host: 'localhost',
+              port: 5175,
+            },
       proxy: {
         '/auth': {
           target: 'http://localhost:3007',
