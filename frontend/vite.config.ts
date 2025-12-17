@@ -13,7 +13,8 @@ export default defineConfig({
       '/auth': { target: 'http://localhost:3007', changeOrigin: true },
       '/logs': { target: 'http://localhost:3007', changeOrigin: true },
       '/py':   { target: 'http://localhost:5005', changeOrigin: true, rewrite: p => p.replace(/^\/py/, '') },
-      '/klees':{ target: 'http://localhost:5006', changeOrigin: true, rewrite: p => p.replace(/^\/klees/, '') },
+      '/klees/upload': { target: 'http://localhost:5006', changeOrigin: true, rewrite: p => p.replace(/^\/klees\/upload/, '/upload') },
+      '/klees/health': { target: 'http://localhost:5006', changeOrigin: true, rewrite: p => p.replace(/^\/klees\/health/, '/health') },
     },
   },
 })

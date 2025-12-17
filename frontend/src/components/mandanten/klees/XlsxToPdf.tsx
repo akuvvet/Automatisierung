@@ -7,6 +7,7 @@ export default function XlsxToPdf() {
   const [selectedFileName, setSelectedFileName] = useState<string>('Keine Datei ausgewählt')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fileId = 'file-xlsx-to-pdf'
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
     const f = e.target.files && e.target.files[0]
@@ -51,23 +52,43 @@ export default function XlsxToPdf() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
-      <h2 style={{ margin: 0, marginBottom: 8 }}>Excel hochladen → PDF erzeugen</h2>
-      <p style={{ color: '#475569', marginTop: 0, marginBottom: 12 }}>Unterstützt .xlsx/.xls</p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-        <label
-          htmlFor="file"
-          style={{ display: 'inline-block', padding: '10px 14px', borderRadius: 10, background: '#111827', color: 'white', cursor: 'pointer' }}
-        >
-          Datei wählen
-        </label>
-        <input id="file" name="file" type="file" accept=".xlsx,.xls" ref={fileInputRef} onChange={onFileChange} style={{ display: 'none' }} />
-        <span style={{ color: '#64748b' }}>{selectedFileName}</span>
-        <button type="submit" disabled={loading} style={{ padding: '10px 14px' }}>
-          {loading ? 'Bitte warten…' : 'PDF erzeugen'}
-        </button>
+    <form onSubmit={onSubmit}>
+      <div className="uploadGrid">
+        <div className="uploadCard konto">
+          <div className="uploadCardTitle">Excel (.xlsx/.xls) auswählen</div>
+          <div className="fileRow">
+            <input
+              id={fileId}
+              className="visuallyHidden"
+              name="file"
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              onChange={onFileChange}
+            />
+            <label className="fileButton" htmlFor={fileId}>Datei auswählen</label>
+            <span className={`fileName${selectedFileName !== 'Keine Datei ausgewählt' ? ' selected' : ''}`}>{selectedFileName}</span>
+          </div>
+        </div>
+
+        <div>
+          <button type="submit" disabled={loading} style={{ padding: '10px 14px' }}>
+            {loading ? 'Bitte warten…' : 'PDF erzeugen'}
+          </button>
+        </div>
+
+        {error && (
+          <div
+            style={{
+              background: '#eef2ff',
+              padding: 10,
+              borderRadius: 8,
+            }}
+          >
+            {error}
+          </div>
+        )}
       </div>
-      {error ? <div style={{ color: '#ef4444' }}>{error}</div> : null}
     </form>
   )
 }

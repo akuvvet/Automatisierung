@@ -115,13 +115,34 @@ def create_pdf(data, output_buffer: BytesIO):
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"], "supports_credentials": False}})
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:5175",
+            "http://127.0.0.1:5175",
+        ],
+        "supports_credentials": False
+    }
+})
 
 
 @app.get("/health")
 def health():
     return jsonify({"ok": True, "service": "klees-xlsx-to-pdf"}), 200
 
+
+@app.get("/")
+def root():
+    return jsonify({
+        "ok": True,
+        "service": "klees-xlsx-to-pdf",
+        "endpoints": {
+            "GET /health": "Service-Status",
+            "POST /upload": "Excel hochladen, PDF herunterladen"
+        }
+    }), 200
 
 @app.post("/upload")
 def upload():
