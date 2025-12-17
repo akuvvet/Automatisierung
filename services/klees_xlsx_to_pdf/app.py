@@ -1,8 +1,9 @@
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 from io import BytesIO
 import pandas as pd
+import os
 
 
 def process_excel(file):
@@ -114,6 +115,10 @@ def create_pdf(data, output_buffer: BytesIO):
     c.save()
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+RESULTS_FOLDER = os.path.join(BASE_DIR, "results")
+
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
@@ -126,6 +131,13 @@ CORS(app, resources={
         "supports_credentials": False
     }
 })
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["RESULTS_FOLDER"] = RESULTS_FOLDER
+
+# Stelle sicher, dass tenant-lokale Ordner existieren
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
 
 @app.get("/health")
@@ -140,7 +152,8 @@ def root():
         "service": "klees-xlsx-to-pdf",
         "endpoints": {
             "GET /health": "Service-Status",
-            "POST /upload": "Excel hochladen, PDF herunterladen"
+            "POST /upload": "Excel hochladen, PDF herunterladen",
+            "GET /results/<filename>": "Gespeicherte PDFs abrufen"
         }
     }), 200
 
@@ -149,15 +162,38 @@ def upload():
     uploaded_file = request.files.get("file")
     if not uploaded_file or uploaded_file.filename == "":
         return "Keine Datei hochgeladen.", 400
-    file_bytes = uploaded_file.read()
-    excel_stream = BytesIO(file_bytes)
-    data = process_excel(excel_stream)
+
+    # Upload speichern
+    original_name = uploaded_file.filename
+    upload_path = os.path.join(UPLOAD_FOLDER, original_name)
+    uploaded_file.save(upload_path)
+
+    # Excel verarbeiten
+    with open(upload_path, "rb") as f:
+        data = process_excel(f)
+
+    # PDF erstellen (in Memory) und zusätzlich in results sichern
     pdf_buffer = BytesIO()
     create_pdf(data, pdf_buffer)
     pdf_buffer.seek(0)
+
     now = datetime.now()
     filename = f"lagerbuch_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
-    return send_file(pdf_buffer, mimetype="application/pdf", as_attachment=True, download_name=filename)
+    result_path = os.path.join(RESULTS_FOLDER, filename)
+
+    with open(result_path, "wb") as out_f:
+        out_f.write(pdf_buffer.getvalue())
+
+    # Direkt-Download zurückgeben
+    return send_file(result_path, mimetype="application/pdf", as_attachment=True, download_name=filename)
+
+
+@app.get("/results/<path:filename>")
+def get_result(filename: str):
+    file_path = os.path.join(RESULTS_FOLDER, filename)
+    if not os.path.exists(file_path):
+        return jsonify({"ok": False, "error": "Datei nicht gefunden"}), 404
+    return send_from_directory(RESULTS_FOLDER, filename, as_attachment=True, mimetype="application/pdf", download_name=filename)
 
 
 if __name__ == "__main__":

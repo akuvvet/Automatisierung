@@ -25,7 +25,7 @@ export default function Telematik() {
     try {
       const form = new FormData()
       form.append('excel', file)
-      const res = await fetch('/py/telematik/process', {
+      const res = await fetch('/oguz/telematik/process', {
         method: 'POST',
         body: form,
         credentials: 'include',
@@ -44,7 +44,7 @@ export default function Telematik() {
         throw new Error('Server lieferte keinen Download-Pfad.')
       }
       const downloadPath: string = j.download.startsWith('/') ? j.download : `/${j.download}`
-      const url = `/py${downloadPath}`
+      const url = `/oguz${downloadPath}`
       window.open(url, '_blank', 'noopener,noreferrer')
       // Zwischenablagevorschau aus Response setzen
       setClipboardPreview(j.clipboardPreview || '')

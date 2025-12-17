@@ -15,6 +15,9 @@ export default defineConfig({
       '/py':   { target: 'http://localhost:5005', changeOrigin: true, rewrite: p => p.replace(/^\/py/, '') },
       '/klees/upload': { target: 'http://localhost:5006', changeOrigin: true, rewrite: p => p.replace(/^\/klees\/upload/, '/upload') },
       '/klees/health': { target: 'http://localhost:5006', changeOrigin: true, rewrite: p => p.replace(/^\/klees\/health/, '/health') },
+      '/oguz/telematik': { target: 'http://localhost:5007', changeOrigin: true, rewrite: p => p.replace(/^\/oguz\/telematik/, '/telematik') },
+      '/oguz/results':   { target: 'http://localhost:5007', changeOrigin: true, rewrite: p => p.replace(/^\/oguz\/results/, '/results') },
+      '/oguz/health':    { target: 'http://localhost:5007', changeOrigin: true, rewrite: p => p.replace(/^\/oguz\/health/, '/health') },
     },
   },
 })
