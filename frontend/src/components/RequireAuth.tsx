@@ -33,15 +33,19 @@ export default function RequireAuth({ children }: PropsWithChildren) {
   const pathname = location.pathname || ''
   const rawUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
   let tenantSlug: string | undefined
+  let role: string | undefined
   try {
-    tenantSlug = rawUser ? (JSON.parse(rawUser)?.tenant?.slug as string | undefined) : undefined
+    const u = rawUser ? JSON.parse(rawUser) : null
+    tenantSlug = u?.tenant?.slug as string | undefined
+    role = u?.role as string | undefined
   } catch {
     tenantSlug = undefined
+    role = undefined
   }
   // Wenn eine Tenant-Route (/oguz, /oflaz, ...) aufgerufen wird, muss sie zum eigenen Tenant passen
   const tenantRouteMatch = pathname.match(/^\/([a-zA-Z0-9_-]+)/)
   const routeTenant = tenantRouteMatch?.[1]
-  if (routeTenant && ['oguz', 'oflaz', 'klees'].includes(routeTenant)) {
+  if (routeTenant && ['oguz', 'oflaz', 'klees'].includes(routeTenant) && role !== 'admin') {
     if (!tenantSlug || tenantSlug !== routeTenant) {
       return <Navigate to={`/${tenantSlug ?? ''}`} replace />
     }

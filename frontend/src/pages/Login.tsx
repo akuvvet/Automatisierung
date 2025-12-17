@@ -26,10 +26,18 @@ export default function Login() {
       localStorage.setItem('token', data.token)
       try {
         localStorage.setItem('user', JSON.stringify(data.user))
-      } catch {}
-      navigate(data.redirectPath || '/', { replace: true })
-    } catch (err: any) {
-      setError(err.message ?? 'Unbekannter Fehler')
+      } catch {
+        // ignore storage failures
+      }
+      // Admin zur Auswahlseite, sonst Standard-Redirect
+      if (data?.user?.role === 'admin') {
+        navigate('/admin/select', { replace: true })
+      } else {
+        navigate(data.redirectPath || '/', { replace: true })
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg || 'Unbekannter Fehler')
     } finally {
       setLoading(false)
     }

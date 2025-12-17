@@ -7,6 +7,7 @@ import Oflaz from './pages/mandanten/oflaz/Oflaz'
 import Klees from './pages/mandanten/klees/Klees'
 import RequireAuth from './components/RequireAuth'
 import Welcome from './pages/Welcome'
+import SelectTenant from './pages/admin/SelectTenant'
 
 function App() {
   return (
@@ -17,6 +18,14 @@ function App() {
           element={
             <RequireAuth>
               <Home />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/select"
+          element={
+            <RequireAuth>
+              <SelectTenant />
             </RequireAuth>
           }
         />
