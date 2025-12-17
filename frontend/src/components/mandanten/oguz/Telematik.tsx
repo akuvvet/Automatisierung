@@ -13,6 +13,7 @@ export default function Telematik() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [clipboardPreview, setClipboardPreview] = useState<string>('')
+  const fileId = 'file-telematik'
 
   async function onProcess(): Promise<void> {
     if (!file) {
@@ -70,25 +71,47 @@ export default function Telematik() {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        <input
-          type="file"
-          accept=".xlsx"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          aria-label="Excel-Datei auswählen"
-        />
-        <button onClick={onProcess} disabled={busy} style={{ padding: '8px 12px' }}>
-          {busy ? 'Bitte warten…' : 'Verarbeiten & herunterladen'}
-        </button>
-        <button onClick={onCopyClipboard} disabled={busy} style={{ padding: '8px 12px' }}>
-          In Zwischenablage kopieren
-        </button>
-        <div style={{ color: '#64748b' }}>Vorschlag: {formatDateYMD()}.xlsx</div>
-      </div>
+      <div className="uploadGrid">
+        <div className="uploadCard konto">
+          <div className="uploadCardTitle">Telematik Excel (.xlsx) auswählen</div>
+          <div className="fileRow">
+            <input
+              id={fileId}
+              className="visuallyHidden"
+              type="file"
+              accept=".xlsx"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              aria-label="Excel-Datei auswählen"
+            />
+            <label className="fileButton" htmlFor={fileId}>Datei auswählen</label>
+            <span className={`fileName${file ? ' selected' : ''}`}>{file ? file.name : 'Keine Datei ausgewählt'}</span>
+          </div>
+          <div style={{ marginTop: 12, color: '#64748b' }}>Vorschlag: {formatDateYMD()}.xlsx</div>
+        </div>
 
-      {message && (
-        <div style={{ marginBottom: 12, padding: '8px 10px', background: '#f1f5f9', borderRadius: 8 }}>{message}</div>
-      )}
+        <div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={onProcess} disabled={busy || !file} style={{ padding: '10px 14px' }}>
+              {busy ? 'Bitte warten…' : 'Verarbeiten & herunterladen'}
+            </button>
+            <button onClick={onCopyClipboard} disabled={busy} style={{ padding: '10px 14px' }}>
+              In Zwischenablage kopieren
+            </button>
+          </div>
+        </div>
+
+        {message && (
+          <div
+            style={{
+              background: message.includes('heruntergeladen') ? 'rgb(100, 100, 100)' : '#eef2ff',
+              padding: 10,
+              borderRadius: 8,
+            }}
+          >
+            {message}
+          </div>
+        )}
+      </div>
 
       <fieldset>
         <legend>Zwischenablage-Vorschau (A..K, Zeilen mit F=1/2)</legend>
