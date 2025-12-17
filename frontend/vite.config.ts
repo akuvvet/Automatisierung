@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,                  // akzeptiert externe Verbindungen
-    port: 5174,
+    port: 5175,
     strictPort: true,
     allowedHosts: ['app.klick-und-fertig.de'],
     hmr: {
