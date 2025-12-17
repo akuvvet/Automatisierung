@@ -86,6 +86,92 @@ router.post('/login', async (req: Request, res: Response) => {
   });
 });
 
+// Passwort ändern (eingeloggter Nutzer)
+router.post('/change-password', async (req: Request, res: Response) => {
+  const auth = req.headers.authorization || '';
+  const [, token] = auth.split(' ');
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const secret = process.env.JWT_SECRET || 'dev-secret';
+  let userId: number | undefined;
+  try {
+    const payload = jwt.verify(token, secret) as any;
+    userId = payload?.sub ? Number(payload.sub) : undefined;
+  } catch {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+  const bodySchema = z.object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(6),
+  });
+  const parsed = bodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Ungültige Eingabe', details: parsed.error.flatten() });
+  }
+  const { currentPassword, newPassword } = parsed.data;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return res.status(404).json({ error: 'User nicht gefunden' });
+
+  const ok = await bcrypt.compare(currentPassword, user.passwort);
+  if (!ok) return res.status(400).json({ error: 'Altes Passwort ist falsch' });
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: user.id }, data: { passwort: hashed } });
+  return res.json({ ok: true });
+});
+
+// Nutzer im gleichen Mandanten anlegen (eingeloggt). Admins dürfen Rolle setzen, sonst wird 'mandant' erzwungen
+router.post('/users', async (req: Request, res: Response) => {
+  try {
+    const auth = req.headers.authorization || '';
+    const [, token] = auth.split(' ');
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const secret = process.env.JWT_SECRET || 'dev-secret';
+    const payload = jwt.verify(token, secret) as any;
+    const userId = payload?.sub ? Number(payload.sub) : undefined;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const me = await prisma.user.findUnique({ where: { id: userId } });
+    if (!me) return res.status(404).json({ error: 'User nicht gefunden' });
+
+    const bodySchema = z.object({
+      username: z.string().min(3),
+      email: z.string().email(),
+      password: z.string().min(6),
+      role: z.string().optional(),
+    });
+    const parsed = bodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Ungültige Eingabe', details: parsed.error.flatten() });
+    }
+    const { username, email, password, role } = parsed.data;
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        email,
+        passwort: hashed,
+        role: me.role === 'admin' && role ? role : 'mandant',
+        tenantId: me.tenantId,
+        verzeichnisbaumLogPfad: me.verzeichnisbaumLogPfad,
+      },
+      select: { id: true, username: true, email: true, role: true },
+    });
+    return res.json({ ok: true, user: newUser });
+  } catch (e: any) {
+    if (e?.code === 'P2002') {
+      return res.status(400).json({ error: 'Username oder E-Mail bereits vergeben' });
+    }
+    return res.status(500).json({ error: 'Serverfehler' });
+  }
+});
+
 // Tenants-Liste für Admins
 router.get('/tenants', async (req: Request, res: Response) => {
   try {
