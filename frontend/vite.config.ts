@@ -8,12 +8,7 @@ export default defineConfig({
     port: 5175,
     strictPort: true,
     allowedHosts: ['app.klick-und-fertig.de'],
-    hmr: {
-      protocol: 'wss',
-      host: 'app.klick-und-fertig.de',
-      clientPort: 443,
-      path: '/_vite/ws',
-    },
+    hmr: false,
     proxy: {
       '/auth': { target: 'http://localhost:3007', changeOrigin: true },
       '/logs': { target: 'http://localhost:3007', changeOrigin: true },
