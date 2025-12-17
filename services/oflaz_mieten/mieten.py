@@ -446,20 +446,51 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
                 worksheet[betrag_cell].number_format = "#,##0.00"
             except Exception:
                 pass
-            # Datum setzen (Format bleibt erhalten; bei leerem/ungültigem Datum wird None gesetzt)
+            # Datum setzen: bei Mehrfacheinträgen im Monat das früheste Datum in ZE schreiben
+            has_previous_in_month = (existing_amount > 0.0) or (len(existing_pairs) > 0)
+            # neuen Datumswert als echtes Datum ermitteln
+            new_date_dt = None
             try:
-                py_dt = t[KONTO_DATUM].to_pydatetime() if hasattr(t[KONTO_DATUM], "to_pydatetime") else t[KONTO_DATUM]
-                if pd.notna(py_dt):
-                    date_cell.value = py_dt.date()
-                    date_cell.number_format = "DD.MM.YYYY"
+                dtmp = t[KONTO_DATUM]
+                if pd.notna(dtmp):
+                    py_dt = dtmp.to_pydatetime() if hasattr(dtmp, "to_pydatetime") else dtmp
+                    if py_dt:
+                        new_date_dt = getattr(py_dt, "date", lambda: py_dt)()
                 else:
+                    rv = str(raw_date or "").strip()
+                    m_iso = re.search(r"(\d{4})[-/\.](\d{2})[-/\.](\d{2})", rv)
+                    if m_iso:
+                        parsed = datetime(int(m_iso.group(1)), int(m_iso.group(2)), int(m_iso.group(3)))
+                        new_date_dt = parsed.date()
+                    else:
+                        parsed = datetime.strptime(rv.replace("/", "."), "%d.%m.%Y")
+                        new_date_dt = parsed.date()
+            except Exception:
+                new_date_dt = None
+            if has_previous_in_month:
+                # Vorhandenes Datum lesen und mit neuem Datum vergleichen (frühestes wählen)
+                prev_dt = None
+                try:
+                    if prev_cell_val:
+                        prev_pd = pd.to_datetime(prev_cell_val, dayfirst=True, errors="coerce")
+                        if pd.notna(prev_pd):
+                            prev_dt = (prev_pd.to_pydatetime() if hasattr(prev_pd, "to_pydatetime") else prev_pd).date()
+                except Exception:
+                    prev_dt = None
+                chosen_dt = new_date_dt if prev_dt is None else (prev_dt if (new_date_dt is None or prev_dt <= new_date_dt) else new_date_dt)
+                try:
+                    date_cell.value = chosen_dt
+                    date_cell.number_format = "DD.MM.YYYY"
+                except Exception:
                     date_cell.value = None
                     date_cell.number_format = "DD.MM.YYYY"
-            except Exception:
-                date_cell.value = None
-                date_cell.number_format = "DD.MM.YYYY"
-
-            has_previous_in_month = (existing_amount > 0.0) or (len(existing_pairs) > 0)
+            else:
+                try:
+                    date_cell.value = new_date_dt
+                    date_cell.number_format = "DD.MM.YYYY"
+                except Exception:
+                    date_cell.value = None
+                    date_cell.number_format = "DD.MM.YYYY"
             if has_previous_in_month:
                 lines = []
                 if existing_pairs:
