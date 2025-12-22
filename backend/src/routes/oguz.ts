@@ -9,7 +9,7 @@ const upload = multer();
 // Ziel-Service: Python Telematik (oguz)
 // Fallback auf localhost:5007, kann via ENV überschrieben werden
 const OGUZ_TELEMATIK_BASE: string =
-  process.env.OGUZ_TELEMATIK_BASE?.replace(/\/+$/, '') || 'http://localhost:5007';
+  process.env.OGUZ_TELEMATIK_BASE?.replace(/\/+$/, '') || 'http://127.0.0.1:5007';
 
 function toErrorMessage(err: any): string {
   if (axios.isAxiosError(err)) {
