@@ -4,6 +4,7 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import authRouter from './routes/auth';
 import logsRouter from './routes/logs';
+import oguzRouter from './routes/oguz';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -23,6 +24,7 @@ app.get('/users/count', async (_req: Request, res: Response) => {
 
 app.use('/auth', authRouter);
 app.use('/logs', logsRouter);
+app.use('/oguz', oguzRouter);
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console

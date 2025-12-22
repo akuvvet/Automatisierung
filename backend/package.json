@@ -19,16 +19,20 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.16.2",
+    "axios": "^1.7.7",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
+    "@types/multer": "^1.4.12",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
     "prisma": "^5.16.2",
