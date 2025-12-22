@@ -34,7 +34,7 @@ if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
 
   // SPA-Fallback: Liefere index.html für Client-Routen (z. B. /oguz)
-  app.get('*', (req: Request, res: Response) => {
+  app.get(/.*/, (req: Request, res: Response) => {
     const url = req.path;
     // API-Pfade ausnehmen
     if (

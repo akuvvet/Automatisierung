@@ -41,7 +41,7 @@ def process_tours_table(workbook):
         return
     ag_grid_sheet = workbook["ag-grid"]
 
-    current_date = datetime.utcnow().strftime("%Y-%m-%d")
+    current_date = datetime.now().strftime("%Y-%m-%d")
 
     tours_sheet.cell(1, 1, "Tour")
     tours_sheet.cell(1, 2, f"TG ({current_date})")
@@ -184,7 +184,7 @@ def process_excel(file_path, save_directory):
                             pass
         sheet.cell(row_num, target_count_col_idx).value = count if count > 0 else None
 
-    current_date_str = datetime.utcnow().strftime("%Y%m%d")
+    current_date_str = datetime.now().strftime("%Y%m%d")
     modified_file_name = f"{current_date_str}.xlsx"
     os.makedirs(save_directory, exist_ok=True)
     modified_file_path = os.path.join(save_directory, modified_file_name)

@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"blue.bold,cyan.bold\" \"npm --prefix backend run dev\" \"npm --prefix frontend run serve\"",
-    "dev:all": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"blue.bold,cyan.bold\" \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "dev": "concurrently --success=all --kill-others-on-fail -n \"BACKEND,FRONTEND\" -c \"blue.bold,cyan.bold\" \"npm --prefix backend run dev\" \"npm --prefix frontend run serve\"",
+    "dev:all": "concurrently --success=all --kill-others-on-fail -n \"BACKEND,FRONTEND\" -c \"blue.bold,cyan.bold\" \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:frontend:serve": "npm --prefix frontend run serve"
