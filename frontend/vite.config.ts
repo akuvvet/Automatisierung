@@ -14,6 +14,14 @@ export default defineConfig({
       clientPort: 443,                 // Browser nutzt 443 hinter HTTPS/TLS
       protocol: 'wss',                 // sicheres WebSocket-Protokoll
     },
+    // Setze den öffentlichen Origin, damit absolute URLs korrekt sind
+    origin: 'https://app.klick-und-fertig.de',
+    // Stabilere File-Watcher-Einstellungen für Remote/VM/FS
+    watch: {
+      usePolling: true,
+      interval: 1000,
+      ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**'],
+    },
     proxy: {
       '/auth': { target: 'http://localhost:3007', changeOrigin: true },
       '/logs': { target: 'http://localhost:3007', changeOrigin: true },
