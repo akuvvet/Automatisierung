@@ -8,7 +8,12 @@ export default defineConfig({
     port: 5175,
     strictPort: true,
     allowedHosts: ['app.klick-und-fertig.de'],
-    hmr: false,
+    // HMR über Reverse-Proxy (HTTPS → WSS) erlauben
+    hmr: {
+      host: 'app.klick-und-fertig.de', // öffentlicher Hostname
+      clientPort: 443,                 // Browser nutzt 443 hinter HTTPS/TLS
+      protocol: 'wss',                 // sicheres WebSocket-Protokoll
+    },
     proxy: {
       '/auth': { target: 'http://localhost:3007', changeOrigin: true },
       '/logs': { target: 'http://localhost:3007', changeOrigin: true },
