@@ -7,10 +7,13 @@ export default defineConfig({
     host: true,                  // akzeptiert externe Verbindungen
     port: 5175,
     strictPort: true,
+    // Erlaube Zugriffe über beliebige Hostnamen (verhindert 403 bei Proxy-Domain)
+    // HINWEIS: Für mehr Sicherheit kannst du hier eine Whitelist setzen:
+    // allowedHosts: ['app.klick-und-fertig.de', '.klick-und-fertig.de']
+    allowedHosts: true,
     // Lokale Entwicklung: Standard-HMR via ws auf localhost
     // Remote-Setup (z. B. hinter HTTPS-Proxy) kann per ENV aktiviert werden:
     //   VITE_REMOTE_HOST=app.klick-und-fertig.de VITE_HMR_WSS=1
-    allowedHosts: process.env.VITE_REMOTE_HOST ? [process.env.VITE_REMOTE_HOST] : undefined,
     hmr: process.env.VITE_REMOTE_HOST
       ? {
           host: process.env.VITE_REMOTE_HOST,
