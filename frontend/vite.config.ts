@@ -7,10 +7,13 @@ export default defineConfig({
     host: true,                  // akzeptiert externe Verbindungen
     port: 5175,
     strictPort: true,
-    // Erlaube Zugriffe über beliebige Hostnamen (verhindert 403 bei Proxy-Domain)
-    // HINWEIS: Für mehr Sicherheit kannst du hier eine Whitelist setzen:
-    // allowedHosts: ['app.klick-und-fertig.de', '.klick-und-fertig.de']
-    allowedHosts: true,
+    // Remote/Proxy-Setup: Domain für HMR definieren (verhindert ws://localhost)
+    // Setz ggf. VITE_REMOTE_HOST oder KUF_REMOTE_HOST in der Umgebung.
+    // Fallback: app.klick-und-fertig.de
+    get allowedHosts() {
+      const remoteHost = process.env.VITE_REMOTE_HOST || process.env.KUF_REMOTE_HOST || 'app.klick-und-fertig.de'
+      return [remoteHost, '.klick-und-fertig.de']
+    },
     // Lokale Entwicklung: Standard-HMR via ws auf localhost
     // Remote-Setup (z. B. hinter HTTPS-Proxy) kann per ENV aktiviert werden:
     //   VITE_REMOTE_HOST=app.klick-und-fertig.de VITE_HMR_WSS=1
@@ -18,14 +21,22 @@ export default defineConfig({
     // - Wenn REMOTE_HOST gesetzt ist, explizit konfigurieren (Proxy/HTTPS).
     // - Sonst Standard-Autodetect von Vite nutzen (keine explizite localhost-Vorgabe),
     //   um Reload-Schleifen durch unerreichbare ws://localhost zu vermeiden.
-    hmr: process.env.VITE_REMOTE_HOST
-      ? {
-          host: process.env.VITE_REMOTE_HOST,
+    hmr: (() => {
+      const remoteHost = process.env.VITE_REMOTE_HOST || process.env.KUF_REMOTE_HOST || 'app.klick-und-fertig.de'
+      const forceRemote = true // immer Remote-Host verwenden, um ws://localhost zu vermeiden
+      if (forceRemote) {
+        return {
+          host: remoteHost,
           clientPort: 443,
-          protocol: process.env.VITE_HMR_WSS === '1' ? 'wss' : 'ws',
+          protocol: 'wss',
         }
-      : undefined,
-    origin: process.env.VITE_REMOTE_HOST ? `https://${process.env.VITE_REMOTE_HOST}` : undefined,
+      }
+      return undefined
+    })(),
+    origin: (() => {
+      const remoteHost = process.env.VITE_REMOTE_HOST || process.env.KUF_REMOTE_HOST || 'app.klick-und-fertig.de'
+      return `https://${remoteHost}`
+    })(),
     // Stabilere File-Watcher-Einstellungen für Remote/VM/FS
     watch: {
       usePolling: true,
