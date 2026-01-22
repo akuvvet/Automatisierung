@@ -32,7 +32,7 @@ export default function RequireAuth({ children }: PropsWithChildren) {
     } catch { void 0 }
     // Verhindere Weiterleitungs-/Reload-Schleifen: Wenn wir bereits auf /login sind,
     // rendere die Kinder (z. B. die Login-Seite) ohne erneute Navigation.
-    if (pathname === '/login') {
+    if (pathname === '/login' || pathname.startsWith('/login')) {
       return <>{children}</>
     }
     return <Navigate to="/login" state={{ from: location }} replace />

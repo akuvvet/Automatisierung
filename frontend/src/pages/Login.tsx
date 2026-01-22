@@ -1,12 +1,54 @@
-import { type FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectedOnceRef = useRef(false)
+  const isJwtValid = useMemo(() => {
+    return (t?: string | null): boolean => {
+      if (!t) return false
+      const parts = t.split('.')
+      if (parts.length < 2) return false
+      try {
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+        const payload = JSON.parse(atob(b64))
+        if (typeof payload.exp === 'number') {
+          const nowSec = Math.floor(Date.now() / 1000)
+          return nowSec < payload.exp
+        }
+        return true
+      } catch {
+        return false
+      }
+    }
+  }, [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // Schon eingeloggte Nutzer sofort weiterleiten, um Flackern/Reloads zu vermeiden
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (redirectedOnceRef.current) return
+    if (isJwtValid(token)) {
+      redirectedOnceRef.current = true
+      try {
+        const rawUser = localStorage.getItem('user')
+        const user = rawUser ? JSON.parse(rawUser) : null
+        if (user?.role === 'admin') {
+          navigate('/admin/select', { replace: true })
+          return
+        }
+        const from = (location.state as any)?.from?.pathname as string | undefined
+        const fallback = user?.tenant?.redirectPath || '/'
+        navigate(from || fallback, { replace: true })
+      } catch {
+        navigate('/', { replace: true })
+      }
+    }
+  }, [isJwtValid, navigate, location.state])
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
