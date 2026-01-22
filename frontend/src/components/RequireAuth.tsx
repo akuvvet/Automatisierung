@@ -22,15 +22,22 @@ export default function RequireAuth({ children }: PropsWithChildren) {
     }
   }
 
+  // Aktuellen Pfad früh lesen, um Login-Sonderfall handhaben zu können
+  const pathname = location.pathname || ''
+
   if (!isJwtValid(token)) {
     try {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
     } catch { void 0 }
+    // Verhindere Weiterleitungs-/Reload-Schleifen: Wenn wir bereits auf /login sind,
+    // rendere die Kinder (z. B. die Login-Seite) ohne erneute Navigation.
+    if (pathname === '/login') {
+      return <>{children}</>
+    }
     return <Navigate to="/login" state={{ from: location }} replace />
   }
   // Mandanten-Routenschutz: verhindert Zugriff auf fremde Tenant-Seiten
-  const pathname = location.pathname || ''
   const rawUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
   let tenantSlug: string | undefined
   let role: string | undefined

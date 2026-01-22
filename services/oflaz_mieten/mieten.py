@@ -166,27 +166,39 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
                     return label
         return "Sonstiges"
 
-    cat_series = df_konto[KONTO_KATEGORIE].astype(str) if KONTO_KATEGORIE in df_konto.columns else pd.Series([""] * len(df_konto), index=df_konto.index)
+    # Kategorie-Spalten erkennen: "Kategorie" oder "Kategorien" (ggf. mehrere)
+    cat_cols = [c for c in df_konto.columns if str(c).strip().lower() in ("kategorie", "kategorien")]
+    if cat_cols:
+        cat_series = df_konto[cat_cols].astype(str).agg(" ".join, axis=1)
+    else:
+        cat_series = pd.Series([""] * len(df_konto), index=df_konto.index)
     df_konto["__text_summe"] = (df_konto[KONTO_VWZ].astype(str) + " " + cat_series + " " + df_konto[KONTO_OBJEKT].astype(str))
     df_konto["__klass"] = df_konto["__text_summe"].apply(klassifiziere)
 
-    def finde_suchwort(text: str) -> str:
-        t = (text or "").lower()
-        patterns = [
-            (None, [r"\bmiet\w*\b", r"\bkm\b", r"\bkaltmiete\b", r"\bstellplatz\b", r"\bgarage\b"]),
-            (None, [r"\bnebenkosten\b", r"\bnk\b", r"\bbetriebskosten\b", r"\bbk\b"]),
-            (None, [r"\bnach\-?zahlung\b", r"\bnachz\b"]),
-            (None, [r"\brate(nzahlung)?\b"]),
-            (None, [r"\bhonorar\b"]),
-        ]
-        for _, pats in patterns:
-            for p in pats:
-                m = re.search(p, t, re.IGNORECASE)
-                if m:
-                    return m.group(0)
-        return ""
+    def finde_suchwort_priorisiert(cat_text: str, vwz_text: str) -> str:
+        def _scan(txt: str) -> str:
+            t = (txt or "").lower()
+            patterns = [
+                (None, [r"\bmiet\w*\b", r"\bkm\b", r"\bkaltmiete\b", r"\bstellplatz\b", r"\bgarage\b"]),
+                (None, [r"\bnebenkosten\b", r"\bnk\b", r"\bbetriebskosten\b", r"\bbk\b", r"\bhausgeld\b", r"\bheizkosten\b"]),
+                (None, [r"\bnach\-?zahlung\b", r"\bnachz\b"]),
+                (None, [r"\brate(nzahlung)?\b"]),
+                (None, [r"\bhonorar\b"]),
+            ]
+            for _, pats in patterns:
+                for p in pats:
+                    m = re.search(p, t, re.IGNORECASE)
+                    if m:
+                        return m.group(0)
+            return ""
+        # Priorität: zuerst Kategorie(n), dann Verwendungszweck
+        hit = _scan(cat_text)
+        if hit:
+            return hit
+        return _scan(vwz_text)
 
-    df_konto["__hit"] = df_konto["__text_summe"].apply(finde_suchwort)
+    # Treffer: priorisierte Suche, damit bei Vorkommen in beiden Spalten nur einmal gezählt wird
+    df_konto["__hit"] = [finde_suchwort_priorisiert(c, v) for c, v in zip(cat_series, df_konto[KONTO_VWZ].astype(str))]
     # Normalisierte Felder für spätere Namenssuche im VWZ (insbesondere bei Jobcenter/Bundesagentur)
     def _norm_text(val: str) -> str:
         return re.sub(
@@ -213,8 +225,7 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
             return None
         return month_key_map.get(m.group(1).lower())
 
-    cat_for_override = df_konto[KONTO_KATEGORIE].astype(str) if KONTO_KATEGORIE in df_konto.columns else pd.Series([""] * len(df_konto), index=df_konto.index)
-    df_konto["__month_override"] = ((df_konto[KONTO_VWZ].astype(str) + " " + cat_for_override).apply(finde_monats_override))
+    df_konto["__month_override"] = ((df_konto[KONTO_VWZ].astype(str) + " " + cat_series).apply(finde_monats_override))
 
     sheet_such = "suchtreffer"
     if sheet_such in workbook.sheetnames:

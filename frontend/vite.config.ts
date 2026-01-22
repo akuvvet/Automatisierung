@@ -7,15 +7,22 @@ export default defineConfig({
     host: true,                  // akzeptiert externe Verbindungen
     port: 5175,
     strictPort: true,
-    allowedHosts: ['app.klick-und-fertig.de'],
-    // HMR über Reverse-Proxy (HTTPS → WSS) erlauben
-    hmr: {
-      host: 'app.klick-und-fertig.de', // öffentlicher Hostname
-      clientPort: 443,                 // Browser nutzt 443 hinter HTTPS/TLS
-      protocol: 'wss',                 // sicheres WebSocket-Protokoll
-    },
-    // Setze den öffentlichen Origin, damit absolute URLs korrekt sind
-    origin: 'https://app.klick-und-fertig.de',
+    // Lokale Entwicklung: Standard-HMR via ws auf localhost
+    // Remote-Setup (z. B. hinter HTTPS-Proxy) kann per ENV aktiviert werden:
+    //   VITE_REMOTE_HOST=app.klick-und-fertig.de VITE_HMR_WSS=1
+    allowedHosts: process.env.VITE_REMOTE_HOST ? [process.env.VITE_REMOTE_HOST] : undefined,
+    hmr: process.env.VITE_REMOTE_HOST
+      ? {
+          host: process.env.VITE_REMOTE_HOST,
+          clientPort: 443,
+          protocol: process.env.VITE_HMR_WSS === '1' ? 'wss' : 'ws',
+        }
+      : {
+          host: 'localhost',
+          port: 5175,
+          protocol: 'ws',
+        },
+    origin: process.env.VITE_REMOTE_HOST ? `https://${process.env.VITE_REMOTE_HOST}` : undefined,
     // Stabilere File-Watcher-Einstellungen für Remote/VM/FS
     watch: {
       usePolling: true,
