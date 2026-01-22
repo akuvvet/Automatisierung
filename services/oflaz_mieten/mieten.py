@@ -231,10 +231,10 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
     if sheet_such in workbook.sheetnames:
         del workbook[sheet_such]
     ws_such = workbook.create_sheet(sheet_such)
-    ws_such.append(["Datum", "Name", "Suchwort", "Betrag", "Zielmonat", "Verwendungszweck"])
+    ws_such.append(["Datum", "Name", "Suchwort", "Betrag", "Verwendungszweck"])
 
     relevante_labels = {"Miete", "Nebenkosten", "Nachzahlung", "Rate", "Honorar"}
-    df_such = df_konto[(df_konto["__klass"].isin(relevante_labels)) | (df_konto["__month_override"].notna())].copy()
+    df_such = df_konto[df_konto["__klass"].isin(relevante_labels)].copy()
     try:
         df_such = df_such.sort_values([KONTO_PAYEE, KONTO_DATUM, KONTO_BETRAG], kind="mergesort")
     except Exception:
@@ -242,8 +242,7 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
 
     for _, r in df_such.iterrows():
         hit = r["__hit"] if r["__hit"] else r["__klass"]
-        ziel_monat = r.get("__month_override", "")
-        ws_such.append(["", r[KONTO_PAYEE], str(hit), r[KONTO_BETRAG], ziel_monat if ziel_monat else "", r[KONTO_VWZ]])
+        ws_such.append(["", r[KONTO_PAYEE], str(hit), r[KONTO_BETRAG], r[KONTO_VWZ]])
         row_idx = ws_such.max_row
         date_cell = ws_such.cell(row=row_idx, column=1)
         raw_val = r.get("__raw_date", "")
@@ -272,8 +271,6 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
             ws_such.cell(row=row_idx, column=4).number_format = "#,##0.00"
         except Exception:
             pass
-
-    months_order = list(MONATS_ZUORDNUNG.keys())
 
     def _get_writable_cell(ws, coord):
         c = ws[coord]
@@ -382,9 +379,6 @@ def fuehre_mietabgleich_durch(excel_pfad, konto_xlsx_pfad):
                 continue
 
             month_idx = None
-            override = t.get("__month_override", None)
-            if isinstance(override, str) and override in months_order:
-                month_idx = months_order.index(override)
             if pd.notna(dval):
                 try:
                     month_idx = int(getattr(dval, "month"))
